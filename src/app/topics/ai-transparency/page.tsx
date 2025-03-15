@@ -4,18 +4,18 @@ import VoteChart from '@/components/VoteChart';
 export default function AITransparencyPage() {
   const voteData = {
     before: {
-      veryDisagree: 11,
-      disagree: 32,
-      neutral: 22,
-      agree: 16,
-      veryAgree: 19,
+      "非常不同意": 11,
+      "不同意": 32,
+      "中立": 22,
+      "同意": 16,
+      "非常同意": 19,
     },
     after: {
-      veryDisagree: 14,
-      disagree: 26,
-      neutral: 43,
-      agree: 11,
-      veryAgree: 6,
+      "非常不同意": 14,
+      "不同意": 26,
+      "中立": 43,
+      "同意": 11,
+      "非常同意": 6,
     },
   };
 
@@ -38,9 +38,7 @@ export default function AITransparencyPage() {
               <div className="bg-gray-50 p-4 rounded-lg">
                 <div className="mb-6">
                   <VoteChart
-                    beforeData={voteData.before}
-                    afterData={voteData.after}
-                    title="AI 公司是否應該公開其演算法與資料？"
+                    data={voteData}
                   />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
