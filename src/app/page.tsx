@@ -1,345 +1,216 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import VoteChart from '@/components/VoteChart';
+import SimpleWordCloud from '@/components/SimpleWordCloud';
+
+const topics = [
+  { 
+    id: 'ai-political', 
+    title: 'AI 生成內容與政治宣傳',
+    description: '探討 AI 生成內容在政治宣傳中的使用規範，以及對民主選舉的影響。',
+    voteData: {
+      before: {
+        "非常不同意": 19,
+        "不同意": 27,
+        "中立": 16,
+        "同意": 22,
+        "非常同意": 16
+      },
+      after: {
+        "非常不同意": 14,
+        "不同意": 26,
+        "中立": 23,
+        "同意": 11,
+        "非常同意": 6
+      }
+    },
+    keywords: [
+      { text: '假新聞', value: 90, category: 'negative' as const },
+      { text: '選舉', value: 85, category: 'neutral' as const },
+      { text: '民主', value: 80, category: 'positive' as const },
+      { text: '操控', value: 75, category: 'negative' as const },
+      { text: '監管', value: 70, category: 'neutral' as const }
+    ]
+  },
+  { 
+    id: 'ai-transparency', 
+    title: 'AI 透明度與信任度',
+    description: '討論 AI 系統的透明度要求，以及如何建立公眾對 AI 的信任。',
+    voteData: {
+      before: {
+        "非常不同意": 11,
+        "不同意": 32,
+        "中立": 22,
+        "同意": 16,
+        "非常同意": 19
+      },
+      after: {
+        "非常不同意": 14,
+        "不同意": 26,
+        "中立": 43,
+        "同意": 11,
+        "非常同意": 6
+      }
+    },
+    keywords: [
+      { text: '透明度', value: 95, category: 'positive' as const },
+      { text: '信任', value: 90, category: 'positive' as const },
+      { text: '隱私', value: 85, category: 'negative' as const },
+      { text: '監管', value: 80, category: 'neutral' as const },
+      { text: '資料', value: 75, category: 'neutral' as const }
+    ]
+  },
+  { 
+    id: 'ai-industry', 
+    title: 'AI 產業影響與市場機制',
+    description: '分析 AI 發展對產業的影響，以及市場機制的調節作用。',
+    voteData: {
+      before: {
+        "非常不同意": 24,
+        "不同意": 36,
+        "中立": 21,
+        "同意": 12,
+        "非常同意": 6
+      },
+      after: {
+        "非常不同意": 23,
+        "不同意": 35,
+        "中立": 23,
+        "同意": 13,
+        "非常同意": 6
+      }
+    },
+    keywords: [
+      { text: '就業', value: 95, category: 'negative' as const },
+      { text: '創新', value: 90, category: 'positive' as const },
+      { text: '競爭', value: 85, category: 'neutral' as const },
+      { text: '轉型', value: 80, category: 'neutral' as const },
+      { text: '機會', value: 75, category: 'positive' as const }
+    ]
+  },
+  { 
+    id: 'ai-stereotypes', 
+    title: 'AI 與刻板印象',
+    description: '探討 AI 系統中的偏見問題，以及如何避免強化社會刻板印象。',
+    voteData: {
+      before: {
+        "非常不同意": 15,
+        "不同意": 25,
+        "中立": 30,
+        "同意": 20,
+        "非常同意": 10
+      },
+      after: {
+        "非常不同意": 20,
+        "不同意": 30,
+        "中立": 25,
+        "同意": 15,
+        "非常同意": 10
+      }
+    },
+    keywords: [
+      { text: '偏見', value: 95, category: 'negative' as const },
+      { text: '平等', value: 90, category: 'positive' as const },
+      { text: '教育', value: 85, category: 'positive' as const },
+      { text: '多元', value: 80, category: 'positive' as const },
+      { text: '意識', value: 75, category: 'neutral' as const }
+    ]
+  },
+  { 
+    id: 'ai-responsibility', 
+    title: 'AI 開發者責任',
+    description: '討論 AI 開發者的社會責任，以及相關的倫理準則。',
+    voteData: {
+      before: {
+        "非常不同意": 10,
+        "不同意": 20,
+        "中立": 35,
+        "同意": 25,
+        "非常同意": 10
+      },
+      after: {
+        "非常不同意": 15,
+        "不同意": 25,
+        "中立": 30,
+        "同意": 20,
+        "非常同意": 10
+      }
+    },
+    keywords: [
+      { text: '倫理', value: 95, category: 'neutral' as const },
+      { text: '責任', value: 90, category: 'positive' as const },
+      { text: '安全', value: 85, category: 'positive' as const },
+      { text: '風險', value: 80, category: 'negative' as const },
+      { text: '規範', value: 75, category: 'neutral' as const }
+    ]
+  },
+];
 
 export default function Home() {
-  const [activeSection, setActiveSection] = useState('');
+  const [currentIndex, setCurrentIndex] = useState(0);
 
+  // 處理鍵盤事件
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setActiveSection(entry.target.id);
-          }
-        });
-      },
-      { threshold: 0.5 }
-    );
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        setCurrentIndex((prev) => (prev + 1) % topics.length);
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        setCurrentIndex((prev) => (prev - 1 + topics.length) % topics.length);
+      }
+    };
 
-    document.querySelectorAll('section[id]').forEach((section) => {
-      observer.observe(section);
-    });
-
-    return () => observer.disconnect();
-  }, []);
-
-  const scrollToSection = (id: string) => {
-    const element = document.getElementById(id);
-    element?.scrollIntoView({ behavior: 'smooth' });
-  };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentIndex]);
 
   return (
-    <div className="min-h-screen">
-      {/* 固定導航欄 */}
-      <nav className="fixed top-0 left-0 right-0 bg-gray-800/90 backdrop-blur-sm z-50 border-b border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex space-x-6">
-            <button
-              onClick={() => scrollToSection('overview')}
-              className={`text-sm font-medium transition-colors ${
-                activeSection === 'overview' ? 'text-blue-400' : 'text-gray-300 hover:text-white'
-              }`}
-            >
-              報告概述
-            </button>
-            <button
-              onClick={() => scrollToSection('ai-political')}
-              className={`text-sm font-medium transition-colors ${
-                activeSection === 'ai-political' ? 'text-blue-400' : 'text-gray-300 hover:text-white'
-              }`}
-            >
-              AI 政治宣傳
-            </button>
-            <button
-              onClick={() => scrollToSection('ai-transparency')}
-              className={`text-sm font-medium transition-colors ${
-                activeSection === 'ai-transparency' ? 'text-blue-400' : 'text-gray-300 hover:text-white'
-              }`}
-            >
-              AI 透明度
-            </button>
-            <button
-              onClick={() => scrollToSection('ai-industry')}
-              className={`text-sm font-medium transition-colors ${
-                activeSection === 'ai-industry' ? 'text-blue-400' : 'text-gray-300 hover:text-white'
-              }`}
-            >
-              AI 產業影響
-            </button>
-            <button
-              onClick={() => scrollToSection('ai-stereotypes')}
-              className={`text-sm font-medium transition-colors ${
-                activeSection === 'ai-stereotypes' ? 'text-blue-400' : 'text-gray-300 hover:text-white'
-              }`}
-            >
-              AI 刻板印象
-            </button>
-            <button
-              onClick={() => scrollToSection('ai-responsibility')}
-              className={`text-sm font-medium transition-colors ${
-                activeSection === 'ai-responsibility' ? 'text-blue-400' : 'text-gray-300 hover:text-white'
-              }`}
-            >
-              AI 開發者責任
-            </button>
-          </div>
+    <div className="min-h-screen bg-gray-900 text-white">
+      <main className="container mx-auto px-4 py-8">
+        {/* 標題區 */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold mb-4">台灣的人工智慧應該如何規範？</h1>
+          <p className="text-xl text-gray-300">vTaiwan AI 監管討論追蹤報告</p>
         </div>
-      </nav>
 
-      {/* 主要內容 */}
-      <main className="pt-16">
-        {/* 報告概述 */}
-        <section id="overview" className="py-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h1 className="text-4xl font-bold text-white mb-8">vTaiwan Roundtable #2 Report</h1>
-            <div className="bg-gray-800 rounded-lg p-8">
-              <h2 className="text-2xl font-bold text-white mb-4">報告概述</h2>
-              <p className="text-gray-300 mb-4">
-                本報告探討 AI 監理與社會影響的重要議題，包含五個主要面向：
-              </p>
-              <ul className="list-disc pl-5 space-y-2 text-gray-300">
-                <li>AI 生成內容與政治宣傳</li>
-                <li>AI 透明度與信任度</li>
-                <li>AI 產業影響與市場機制</li>
-                <li>AI 與刻板印象</li>
-                <li>AI 開發者責任</li>
-              </ul>
-            </div>
-          </div>
-        </section>
+        {/* 主題內容區 */}
+        <div className="space-y-16">
+          {topics.map((topic, index) => (
+            <motion.section
+              key={topic.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.2 }}
+              className="bg-gray-800 rounded-lg p-8"
+            >
+              <h2 className="text-2xl font-semibold mb-4">{topic.title}</h2>
+              <p className="text-gray-300 mb-8">{topic.description}</p>
 
-        {/* AI 政治宣傳 */}
-        <section id="ai-political" className="py-16 bg-gray-800/50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-white mb-8">AI 生成內容與政治宣傳</h2>
-            <div className="bg-gray-800 rounded-lg p-8">
-              <div className="mb-8">
-                <VoteChart
-                  beforeData={{
-                    veryDisagree: 19,
-                    disagree: 27,
-                    neutral: 16,
-                    agree: 22,
-                    veryAgree: 16,
-                  }}
-                  afterData={{
-                    veryDisagree: 14,
-                    disagree: 26,
-                    neutral: 23,
-                    agree: 11,
-                    veryAgree: 6,
-                  }}
-                  title="AI 生成內容是否應該被禁止用於政治宣傳？"
-                />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-4">支持禁止的觀點</h3>
-                  <ul className="list-disc pl-5 space-y-2 text-gray-300">
-                    <li>AI 可能加劇假訊息與選舉操控</li>
-                    <li>AI 可能削弱公民的自主判斷</li>
-                    <li>AI 可能成為政治操控工具</li>
-                  </ul>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* 投票結果 */}
+                <div className="bg-gray-700 rounded-lg p-6">
+                  <h3 className="text-xl font-semibold mb-6">投票結果分析</h3>
+                  <VoteChart data={topic.voteData} />
                 </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-4">反對禁止的觀點</h3>
-                  <ul className="list-disc pl-5 space-y-2 text-gray-300">
-                    <li>AI 是工具，關鍵在於使用方式</li>
-                    <li>禁止 AI 內容，無法解決政治宣傳的問題</li>
-                    <li>「政治宣傳」界定模糊，執行困難</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
 
-        {/* AI 透明度 */}
-        <section id="ai-transparency" className="py-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-white mb-8">AI 透明度與信任度</h2>
-            <div className="bg-gray-800 rounded-lg p-8">
-              <div className="mb-8">
-                <VoteChart
-                  beforeData={{
-                    veryDisagree: 11,
-                    disagree: 32,
-                    neutral: 22,
-                    agree: 16,
-                    veryAgree: 19,
-                  }}
-                  afterData={{
-                    veryDisagree: 14,
-                    disagree: 26,
-                    neutral: 43,
-                    agree: 11,
-                    veryAgree: 6,
-                  }}
-                  title="AI 公司是否應該公開其演算法與資料？"
-                />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-4">支持公開的觀點</h3>
-                  <ul className="list-disc pl-5 space-y-2 text-gray-300">
-                    <li>透明度提升信任，促進 AI 應用</li>
-                    <li>確保 AI 訓練數據的合規性</li>
-                    <li>開放演算法有助於更安全的 AI 使用</li>
-                  </ul>
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-4">反對公開的觀點</h3>
-                  <ul className="list-disc pl-5 space-y-2 text-gray-300">
-                    <li>隱私與數據安全疑慮</li>
-                    <li>影響市場競爭，削弱企業優勢</li>
-                    <li>全面公開可能帶來風險</li>
-                    <li>可用其他方式提升透明度</li>
-                  </ul>
+                {/* 關鍵字分析 */}
+                <div className="bg-gray-700 rounded-lg p-6">
+                  <h3 className="text-xl font-semibold mb-6">關鍵字分析</h3>
+                  <SimpleWordCloud words={topic.keywords} />
                 </div>
               </div>
-            </div>
-          </div>
-        </section>
+            </motion.section>
+          ))}
+        </div>
 
-        {/* AI 產業影響 */}
-        <section id="ai-industry" className="py-16 bg-gray-800/50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-white mb-8">AI 產業影響與市場機制</h2>
-            <div className="bg-gray-800 rounded-lg p-8">
-              <div className="mb-8">
-                <VoteChart
-                  beforeData={{
-                    veryDisagree: 15,
-                    disagree: 28,
-                    neutral: 25,
-                    agree: 20,
-                    veryAgree: 12,
-                  }}
-                  afterData={{
-                    veryDisagree: 12,
-                    disagree: 25,
-                    neutral: 35,
-                    agree: 18,
-                    veryAgree: 10,
-                  }}
-                  title="AI 是否會對就業市場造成重大衝擊？"
-                />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-4">支持積極監理的觀點</h3>
-                  <ul className="list-disc pl-5 space-y-2 text-gray-300">
-                    <li>AI 可能導致大規模失業</li>
-                    <li>需要政府介入保護勞工權益</li>
-                    <li>應該建立 AI 稅收機制</li>
-                  </ul>
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-4">支持市場機制的觀點</h3>
-                  <ul className="list-disc pl-5 space-y-2 text-gray-300">
-                    <li>AI 會創造新的就業機會</li>
-                    <li>市場會自然調節</li>
-                    <li>過度監理可能阻礙創新</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* AI 刻板印象 */}
-        <section id="ai-stereotypes" className="py-16">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-white mb-8">AI 與刻板印象</h2>
-            <div className="bg-gray-800 rounded-lg p-8">
-              <div className="mb-8">
-                <VoteChart
-                  beforeData={{
-                    veryDisagree: 8,
-                    disagree: 25,
-                    neutral: 35,
-                    agree: 20,
-                    veryAgree: 12,
-                  }}
-                  afterData={{
-                    veryDisagree: 10,
-                    disagree: 28,
-                    neutral: 40,
-                    agree: 15,
-                    veryAgree: 7,
-                  }}
-                  title="AI 是否會加劇社會刻板印象？"
-                />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-4">支持監管的觀點</h3>
-                  <ul className="list-disc pl-5 space-y-2 text-gray-300">
-                    <li>AI 訓練數據可能包含偏見</li>
-                    <li>需要確保 AI 系統的公平性</li>
-                    <li>應該建立 AI 倫理準則</li>
-                  </ul>
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-4">支持技術解決的觀點</h3>
-                  <ul className="list-disc pl-5 space-y-2 text-gray-300">
-                    <li>AI 可以幫助消除偏見</li>
-                    <li>技術進步會自然解決問題</li>
-                    <li>過度監管可能影響創新</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* AI 開發者責任 */}
-        <section id="ai-responsibility" className="py-16 bg-gray-800/50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-white mb-8">AI 開發者責任</h2>
-            <div className="bg-gray-800 rounded-lg p-8">
-              <div className="mb-8">
-                <VoteChart
-                  beforeData={{
-                    veryDisagree: 5,
-                    disagree: 15,
-                    neutral: 30,
-                    agree: 35,
-                    veryAgree: 15,
-                  }}
-                  afterData={{
-                    veryDisagree: 8,
-                    disagree: 18,
-                    neutral: 35,
-                    agree: 30,
-                    veryAgree: 9,
-                  }}
-                  title="AI 開發者是否應該對 AI 系統的後果負責？"
-                />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-4">支持嚴格責任的觀點</h3>
-                  <ul className="list-disc pl-5 space-y-2 text-gray-300">
-                    <li>開發者應該預見並預防風險</li>
-                    <li>需要建立明確的責任歸屬</li>
-                    <li>應該要求開發者進行影響評估</li>
-                  </ul>
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-4">支持彈性責任的觀點</h3>
-                  <ul className="list-disc pl-5 space-y-2 text-gray-300">
-                    <li>AI 系統的影響難以預測</li>
-                    <li>過度責任可能阻礙創新</li>
-                    <li>應該建立分級責任機制</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+        {/* 底部說明 */}
+        <div className="mt-8 text-center text-gray-400 text-sm">
+          <p>數據來源：vTaiwan 討論平台</p>
+          <p>更新時間：2024-02-24</p>
+        </div>
       </main>
     </div>
   );

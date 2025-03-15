@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from 'react';
+import { Bar } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -9,8 +11,6 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-import { Bar } from 'react-chartjs-2';
-import { useEffect, useState } from 'react';
 
 ChartJS.register(
   CategoryScale,
@@ -22,26 +22,54 @@ ChartJS.register(
 );
 
 interface VoteData {
-  veryDisagree: number;
-  disagree: number;
-  neutral: number;
-  agree: number;
-  veryAgree: number;
+  before: {
+    [key: string]: number;
+  };
+  after: {
+    [key: string]: number;
+  };
 }
 
 interface VoteChartProps {
-  beforeData: VoteData;
-  afterData: VoteData;
-  title: string;
+  data: VoteData;
 }
 
-export default function VoteChart({ beforeData, afterData, title }: VoteChartProps) {
-  const [isClient, setIsClient] = useState(false);
-  const [showBefore, setShowBefore] = useState(true);
+export default function VoteChart({ data }: VoteChartProps) {
+  const [showAfter, setShowAfter] = useState(false);
 
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
+  // 檢查數據是否存在
+  if (!data?.before || !data?.after) {
+    return (
+      <div className="h-full flex items-center justify-center text-gray-400">
+        暫無數據
+      </div>
+    );
+  }
+
+  const chartData = {
+    labels: ["非常不同意", "不同意", "中立", "同意", "非常同意"],
+    datasets: [
+      {
+        label: showAfter ? "討論後" : "討論前",
+        data: Object.values(showAfter ? data.after : data.before),
+        backgroundColor: [
+          'rgba(255, 99, 132, 0.5)',
+          'rgba(255, 159, 64, 0.5)',
+          'rgba(255, 205, 86, 0.5)',
+          'rgba(75, 192, 192, 0.5)',
+          'rgba(54, 162, 235, 0.5)',
+        ],
+        borderColor: [
+          'rgb(255, 99, 132)',
+          'rgb(255, 159, 64)',
+          'rgb(255, 205, 86)',
+          'rgb(75, 192, 192)',
+          'rgb(54, 162, 235)',
+        ],
+        borderWidth: 1,
+      },
+    ],
+  };
 
   const options = {
     responsive: true,
@@ -50,150 +78,46 @@ export default function VoteChart({ beforeData, afterData, title }: VoteChartPro
       legend: {
         position: 'top' as const,
         labels: {
-          boxWidth: 12,
-          padding: 10,
+          color: 'rgba(255, 255, 255, 0.8)',
         },
       },
       title: {
-        display: true,
-        text: title,
-        font: {
-          size: 14,
-        },
-        padding: {
-          bottom: 10,
-        },
+        display: false,
       },
     },
     scales: {
       y: {
         beginAtZero: true,
-        max: 100,
-        title: {
-          display: true,
-          text: '百分比 (%)',
-          font: {
-            size: 12,
-          },
-        },
         ticks: {
-          font: {
-            size: 11,
-          },
+          stepSize: 5,
+          color: 'rgba(255, 255, 255, 0.6)',
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)',
         },
       },
       x: {
         ticks: {
-          font: {
-            size: 11,
-          },
+          color: 'rgba(255, 255, 255, 0.6)',
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)',
         },
       },
     },
-    animation: {
-      duration: 1000,
-      easing: 'easeInOutQuart' as const,
-    },
   };
-
-  const data = {
-    labels: ['非常不同意', '不同意', '中立', '同意', '非常同意'],
-    datasets: [
-      {
-        label: showBefore ? '討論前' : '討論後',
-        data: showBefore
-          ? [
-              beforeData.veryDisagree,
-              beforeData.disagree,
-              beforeData.neutral,
-              beforeData.agree,
-              beforeData.veryAgree,
-            ]
-          : [
-              afterData.veryDisagree,
-              afterData.disagree,
-              afterData.neutral,
-              afterData.agree,
-              afterData.veryAgree,
-            ],
-        backgroundColor: showBefore ? 'rgba(53, 162, 235, 0.5)' : 'rgba(255, 99, 132, 0.5)',
-        borderColor: showBefore ? 'rgb(53, 162, 235)' : 'rgb(255, 99, 132)',
-        borderWidth: 1,
-        barThickness: 30,
-      },
-    ],
-  };
-
-  if (!isClient) {
-    return <div className="h-[300px] bg-gray-700 animate-pulse rounded-lg"></div>;
-  }
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-center space-x-4">
+    <div className="relative h-[300px]">
+      <div className="absolute top-0 right-0 z-10">
         <button
-          onClick={() => setShowBefore(true)}
-          className={`px-4 py-2 rounded-lg transition-colors text-sm ${
-            showBefore
-              ? 'bg-blue-500 text-white'
-              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-          }`}
+          onClick={() => setShowAfter(!showAfter)}
+          className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-500 transition-colors text-sm"
         >
-          討論前
-        </button>
-        <button
-          onClick={() => setShowBefore(false)}
-          className={`px-4 py-2 rounded-lg transition-colors text-sm ${
-            !showBefore
-              ? 'bg-red-500 text-white'
-              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-          }`}
-        >
-          討論後
+          {showAfter ? "查看討論前" : "查看討論後"}
         </button>
       </div>
-      <div className="relative h-[300px]">
-        <Bar options={options} data={data} />
-        {!showBefore && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="bg-red-500/10 border-2 border-red-500/20 rounded-lg p-3">
-              <div className="text-red-400 font-medium text-sm">
-                變化：{calculateChange(beforeData, afterData)}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+      <Bar data={chartData} options={options} />
     </div>
   );
-}
-
-function calculateChange(before: VoteData, after: VoteData): string {
-  const beforeTotal = Object.values(before).reduce((a: number, b: number) => a + b, 0);
-  const afterTotal = Object.values(after).reduce((a: number, b: number) => a + b, 0);
-  
-  const changes = {
-    veryDisagree: after.veryDisagree - before.veryDisagree,
-    disagree: after.disagree - before.disagree,
-    neutral: after.neutral - before.neutral,
-    agree: after.agree - before.agree,
-    veryAgree: after.veryAgree - before.veryAgree,
-  };
-
-  const significantChanges = Object.entries(changes)
-    .filter(([_, value]) => Math.abs(value) > 0)
-    .map(([key, value]) => {
-      const percentage = ((value / beforeTotal) * 100).toFixed(1);
-      const direction = value > 0 ? '增加' : '減少';
-      const label = {
-        veryDisagree: '非常不同意',
-        disagree: '不同意',
-        neutral: '中立',
-        agree: '同意',
-        veryAgree: '非常同意',
-      }[key];
-      return `${label}${direction}${Math.abs(percentage)}%`;
-    });
-
-  return significantChanges.join('、');
 } 
