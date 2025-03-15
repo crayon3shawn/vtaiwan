@@ -189,7 +189,7 @@ export default function Home() {
               <h2 className="text-2xl font-semibold mb-4">{topic.title}</h2>
               <p className="text-gray-300 mb-8">{topic.description}</p>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 gap-8">
                 {/* 投票結果 */}
                 <div className="bg-gray-700 rounded-lg p-6">
                   <h3 className="text-xl font-semibold mb-6">投票結果分析</h3>
