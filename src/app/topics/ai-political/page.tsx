@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect } from 'react';
 import VoteChart from '@/components/VoteChart';
+import SimpleWordCloud from '@/components/SimpleWordCloud';
 
 const voteData = {
   before: {
